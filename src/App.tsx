@@ -1,5 +1,5 @@
 import { Fragment, useState } from "react";
-import { readEeConfig } from "./quantizer-configurator";
+import { readEeConfig, writeEeConfig } from "./quantizer-configurator";
 import { EeConfig } from "./EeConfig";
 import { EeConfigEditor } from "./EeConfigEditor";
 
@@ -18,7 +18,7 @@ function App() {
             {Object.entries(eeconfig).map((e) => {
               const label = e[0];
               return (
-                <Fragment>
+                <Fragment key={label}>
                   <div>{label}</div>
                   <EeConfigEditor
                     config={e[1]}
@@ -85,7 +85,17 @@ function App() {
 
   return (
     <div className="App">
-      <button onClick={() => readEeConfig((c) => setEeconfig(c))}>open</button>
+      <button onClick={() => readEeConfig((c) => setEeconfig(c))}>Read</button>
+      <button
+        onClick={() => {
+          if (!eeconfig) {
+            return;
+          }
+          writeEeConfig(eeconfig, (c) => setEeconfig(c));
+        }}
+      >
+        Write
+      </button>
       {editor()}
     </div>
   );

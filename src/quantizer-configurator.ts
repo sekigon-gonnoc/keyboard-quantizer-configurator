@@ -37,13 +37,31 @@ class EepromConfig {
     }
   }
 
-  public Parse() {
+  public Deserialize() {
     const active = new EeConfig(this.data);
     const win = new EeConfig(this.data.slice(this.EECONFIG_SIZE));
     const mac = new EeConfig(this.data.slice(this.EECONFIG_SIZE * 2));
     const linux = new EeConfig(this.data.slice(this.EECONFIG_SIZE * 3));
     console.log(active, win, mac, linux);
     return { active: active, win: win, mac: mac, linux: linux };
+  }
+
+  private serializeFragment(eeconfig: EeConfig) {
+    console.log(eeconfig);
+    const data = EeConfig.Serialize(eeconfig);
+    if (data.length != this.EECONFIG_SIZE) {
+      console.log('failed to serialize', data.length);
+    }
+    return data;
+  }
+
+  public Serialize(eeconfig: { [os: string]: EeConfig }) {
+    return [
+      ...this.serializeFragment(eeconfig["active"]),
+      ...this.serializeFragment(eeconfig["win"]),
+      ...this.serializeFragment(eeconfig["mac"]),
+      ...this.serializeFragment(eeconfig["linux"]),
+    ];
   }
 }
 
@@ -67,6 +85,19 @@ const getEepromFragment = async (
   const cmd = eepromReadCommand(offset, 26);
   processQueue.Push(cmd, (msg) => {
     eepromConfig.SetFragment((msg[3] << 8) | msg[4], msg[5], msg.slice(6));
+    onReceive(msg);
+  });
+  await hid.write(cmd);
+};
+
+const setEepromFragment = async (
+  offset: number,
+  data: number[],
+  onReceive: (msg: Uint8Array) => void = () => {}
+) => {
+  const cmd = eepromWriteCommand(offset, 26, data);
+
+  processQueue.Push(cmd, (msg) => {
     onReceive(msg);
   });
   await hid.write(cmd);
@@ -96,6 +127,22 @@ const eepromReadCommand = (addr: number, size: number) => {
   ]);
 };
 
+const eepromWriteCommand = (addr: number, size: number, data: number[]) => {
+  if (size > 26) size = 26;
+  if (size > data.length) size = data.length;
+
+  return Uint8Array.from([
+    0x03,
+    0x99,
+    0x04,
+    (addr >> 8) & 0xff,
+    addr & 0xff,
+    size,
+    ...data.slice(0, size)
+  ]);
+};
+
+
 export async function readEeConfig(
   onReceive: (config: { [OS: string]: EeConfig }) => void
 ) {
@@ -109,7 +156,32 @@ export async function readEeConfig(
   await getEepromFragment(78);
   await getEepromFragment(104);
   await getEepromFragment(130, (_: Uint8Array) => {
-    const config = eepromConfig.Parse();
+    const config = eepromConfig.Deserialize();
     onReceive(config);
   });
+}
+
+export async function writeEeConfig(
+  config: { [OS: string]: EeConfig },
+  onReceive: (config: { [OS: string]: EeConfig }) => void
+) {
+  if (hid.connected == false) {
+    await hidOpen();
+  }
+
+  const data = eepromConfig.Serialize(config);
+
+  await setEepromFragment(0, data.slice(0, 26));
+  await setEepromFragment(26, data.slice(26, 52));
+  await setEepromFragment(52, data.slice(52, 78));
+  await setEepromFragment(78, data.slice(78, 104));
+  await setEepromFragment(104, data.slice(104, 130));
+  await setEepromFragment(
+    130,
+    data.slice(130, 4 * eepromConfig.EECONFIG_SIZE),
+    (msg) => {
+      console.log("write complete");
+      readEeConfig(onReceive);
+    }
+  );
 }

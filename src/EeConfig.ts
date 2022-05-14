@@ -2,12 +2,24 @@ export class EeConfigKeyboard {
   readonly override: number = 0;
   readonly enableOs: boolean = false;
   readonly enableCombo: boolean = false;
+
   constructor(data: number[]) {
     if (data.length >= 1) {
-        this.override = data[0] & 0x03;
-        this.enableOs = (data[0] & 0x04) > 0;
-        this.enableCombo = (data[0] & 0x08) > 0;
+      this.enableOs = (data[0] & 0x01) > 0;
+      this.override = (data[0] & 0x06) >> 1;
+      this.enableCombo = (data[0] & 0x08) > 0;
     }
+  }
+
+  public static Serialize(config: EeConfigKeyboard) {
+    return [
+      (config.enableOs ? 0x01 : 0) |
+        ((config.override & 0x03) << 1) |
+        (config.enableCombo ? 0x08 : 0),
+      0,
+      0,
+      0,
+    ];
   }
 }
 
@@ -28,6 +40,7 @@ export class EeConfig {
   readonly velocikey: number;
   readonly haptic: number[];
   readonly rgbmatrix: number[];
+  readonly rgbmatrixExtend: number[];
 
   constructor(d: number[]) {
     this.magic = d[0] | (d[1] << 8);
@@ -46,5 +59,30 @@ export class EeConfig {
     this.velocikey = d[23];
     this.haptic = d.slice(24, 28);
     this.rgbmatrix = d.slice(28, 32);
+    this.rgbmatrixExtend = d.slice(32, 34);
+  }
+
+  public static Serialize(config: EeConfig): number[] {
+    return [
+      config.magic & 0xff,
+      config.magic >> 8,
+      config.debug,
+      config.defaultLayer,
+      config.keymap & 0xff,
+      config.mouseKeyAccel,
+      config.backlight,
+      config.audio,
+      ...config.rgblight,
+      config.unicode,
+      config.stenomode,
+      config.handedness,
+      ...EeConfigKeyboard.Serialize(config.keyboard),
+      ...config.user,
+      config.velocikey,
+      ...config.haptic,
+      ...config.rgbmatrix,
+      ...config.rgbmatrixExtend,
+      config.keymap >> 8,
+    ];
   }
 }

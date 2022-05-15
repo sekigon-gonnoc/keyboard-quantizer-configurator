@@ -30,6 +30,8 @@ class ProcessQueue {
 class EepromConfig {
   readonly EECONFIG_SIZE = 35;
   data: Array<number> = [];
+  protocolVersion = 0;
+  hostOs = 0;
 
   public SetFragment(offset: number, size: number, fragment: Uint8Array) {
     for (let idx = 0; idx < size; idx++) {
@@ -76,6 +78,26 @@ const recvHandler = (msg: Uint8Array) => {
   );
 
   processQueue.Process(msg);
+};
+
+const getVersion = async (onReceive: (msg: Uint8Array) => void = () => {}) => {
+  const cmd = versionCommand();
+  processQueue.Push(cmd, (msg) => {
+    eepromConfig.protocolVersion = msg[3];
+    console.log(`protocol ver.:${eepromConfig.protocolVersion}`);
+    onReceive(msg);
+  });
+  await hid.write(cmd);
+};
+
+const getHostOs = async (onReceive: (msg: Uint8Array) => void = () => {}) => {
+  const cmd = hostOsCommand();
+  processQueue.Push(cmd, (msg) => {
+    eepromConfig.hostOs = msg[3];
+    console.log(`host os:${eepromConfig.hostOs}`);
+    onReceive(msg);
+  });
+  await hid.write(cmd);
 };
 
 const getEepromFragment = async (
@@ -154,6 +176,10 @@ const resetCommand = () => {
   return Uint8Array.from([0x03, 0x99, 0x03]);
 };
 
+const hostOsCommand = () => {
+  return Uint8Array.from([0x02, 0x99, 0x05]);
+};
+
 export async function readEeConfig(
   onReceive: (config: { [OS: string]: EeConfig }) => void
 ) {
@@ -161,6 +187,8 @@ export async function readEeConfig(
     await hidOpen();
   }
 
+  await getVersion();
+  await getHostOs();
   await getEepromFragment(0);
   await getEepromFragment(26);
   await getEepromFragment(52);
@@ -198,20 +226,6 @@ export async function writeEeConfig(
       });
     }
   );
-}
-
-export async function getVersion(
-  onReceive: (msg: Uint8Array) => void = () => {}
-) {
-  if (hid.connected == false) {
-    await hidOpen();
-  }
-
-  const cmd = versionCommand();
-  processQueue.Push(cmd, (msg) => {
-    onReceive(msg);
-  });
-  await hid.write(cmd);
 }
 
 export async function jumpBootloaderTarget() {

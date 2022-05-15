@@ -1,4 +1,4 @@
-interface WebUsbComInterface {
+export interface WebUsbComInterface {
   connected: boolean;
   setReceiveCallback(recvHandler: ((msg: Uint8Array) => void) | null): void;
   setErrorCallback(handler: (e: Error) => void | null): void;
@@ -8,5 +8,3 @@ interface WebUsbComInterface {
   writeString(msg: string): Promise<void>;
   write(msg: Uint8Array): Promise<void>;
 }
-
-export { WebUsbComInterface };

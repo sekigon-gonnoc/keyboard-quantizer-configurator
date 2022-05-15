@@ -17,14 +17,14 @@ class WebRawHID implements WebUsbComInterface {
     private send_chunk: number = 64,
     private send_interval: number = 30
   ) {
-    navigator.hid.addEventListener("disconnect", (_device) => {
+    (navigator as any).hid.addEventListener("disconnect", (_device: any) => {
       this._connected=false;
     });
   }
 
   setReceiveCallback(recvHandler: ((msg: Uint8Array) => void) | null) {
     this.receiveCallback = (e: any) => {
-      recvHandler(new Uint8Array((e.data as DataView).buffer));
+      recvHandler?.(new Uint8Array((e.data as DataView).buffer));
     };
     this.port.addEventListener("inputreport", this.receiveCallback);
     console.log(this.port);
@@ -37,7 +37,7 @@ class WebRawHID implements WebUsbComInterface {
   }
 
   async open(onConnect: () => void | null, param: { filter: object }) {
-    const request = await navigator.hid.requestDevice({
+    const request = await (navigator as any).hid.requestDevice({
       filters: param.filter,
     });
     console.log(request);

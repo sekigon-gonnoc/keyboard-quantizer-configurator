@@ -50,7 +50,7 @@ class EepromConfig {
     console.log(eeconfig);
     const data = EeConfig.Serialize(eeconfig);
     if (data.length != this.EECONFIG_SIZE) {
-      console.log('failed to serialize', data.length);
+      console.log("failed to serialize", data.length);
     }
     return data;
   }
@@ -104,7 +104,7 @@ const setEepromFragment = async (
 };
 
 const hidOpen = async () => {
-  if (!navigator.hid) {
+  if (!(navigator as any).hid) {
     alert("Please use chrome or edge");
     return;
   }
@@ -138,34 +138,21 @@ const eepromWriteCommand = (addr: number, size: number, data: number[]) => {
     (addr >> 8) & 0xff,
     addr & 0xff,
     size,
-    ...data.slice(0, size)
+    ...data.slice(0, size),
   ]);
 };
 
 const versionCommand = () => {
-  return Uint8Array.from([
-    0x02,
-    0x99,
-    0x01,
-  ]);
-}
+  return Uint8Array.from([0x02, 0x99, 0x01]);
+};
 
 const bootloaderCommand = () => {
-  return Uint8Array.from([
-    0x03,
-    0x99,
-    0x02,
-  ]);
-}
+  return Uint8Array.from([0x03, 0x99, 0x02]);
+};
 
 const resetCommand = () => {
-  return Uint8Array.from([
-    0x03,
-    0x99,
-    0x03,
-  ]);
-}
-
+  return Uint8Array.from([0x03, 0x99, 0x03]);
+};
 
 export async function readEeConfig(
   onReceive: (config: { [OS: string]: EeConfig }) => void
@@ -227,20 +214,20 @@ export async function getVersion(
   await hid.write(cmd);
 }
 
-export async function jumpBootloaderTarget(){
+export async function jumpBootloaderTarget() {
   if (hid.connected == false) {
     await hidOpen();
   }
 
   const cmd = bootloaderCommand();
   await hid.write(cmd);
-};
+}
 
-export async function resetTarget(){
+export async function resetTarget() {
   if (hid.connected == false) {
     await hidOpen();
   }
 
   const cmd = resetCommand();
   await hid.write(cmd);
-};
+}

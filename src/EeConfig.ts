@@ -78,11 +78,61 @@ export class EeConfigUser {
   }
 }
 
+export class EeConfigKeymap {
+  readonly swap_control_capslock: boolean = false;
+  readonly capslock_to_control: boolean = false;
+  readonly swap_lalt_lgui: boolean = false;
+  readonly swap_ralt_rgui: boolean = false;
+  readonly no_gui: boolean = false;
+  readonly swap_grave_esc: boolean = false;
+  readonly swap_backslash_backspace: boolean = false;
+  readonly nkro: boolean = false;
+  readonly swap_lctl_lgui: boolean = false;
+  readonly swap_rctl_rgui: boolean = false;
+  readonly oneshot_disable: boolean = false;
+
+  constructor(init?: Partial<EeConfigKeymap>) {
+    Object.assign(this, init);
+  }
+
+  public static Deserialize(data: number): EeConfigKeymap {
+    return new EeConfigKeymap({
+      swap_control_capslock: Boolean(data & 0x01),
+      capslock_to_control: Boolean(data & 0x02),
+      swap_lalt_lgui: Boolean(data & 0x04),
+      swap_ralt_rgui: Boolean(data & 0x08),
+      no_gui: Boolean(data & 0x10),
+      swap_grave_esc: Boolean(data & 0x20),
+      swap_backslash_backspace: Boolean(data & 0x40),
+      nkro: Boolean(data & 0x80),
+      swap_lctl_lgui: Boolean(data & 0x100),
+      swap_rctl_rgui: Boolean(data & 0x200),
+      oneshot_disable: Boolean(data & 0x400),
+    });
+  }
+
+  public static Serialize(config: EeConfigKeymap) {
+    return (
+      (config.swap_control_capslock ? 0x01 : 0) |
+      (config.capslock_to_control ? 0x02 : 0) |
+      (config.swap_lalt_lgui ? 0x04 : 0) |
+      (config.swap_ralt_rgui ? 0x08 : 0) |
+      (config.no_gui ? 0x10 : 0) |
+      (config.swap_grave_esc ? 0x20 : 0) |
+      (config.swap_backslash_backspace ? 0x40 : 0) |
+      (config.nkro ? 0x80 : 0) |
+      (config.swap_lctl_lgui ? 0x100 : 0) |
+      (config.swap_rctl_rgui ? 0x200 : 0) |
+      (config.oneshot_disable ? 0x400 : 0)
+    );
+  }
+}
+
 export class EeConfig {
   readonly magic: number = 0;
   readonly debug: number = 0;
   readonly defaultLayer: number = 0;
-  readonly keymap: number = 0;
+  readonly keymap = EeConfigKeymap.Deserialize(0);
   readonly mouseKeyAccel: number = 0;
   readonly backlight: number = 0;
   readonly audio: number = 0;
@@ -102,11 +152,19 @@ export class EeConfig {
   }
 
   public static Deserialize(d: number[]): EeConfig {
+    let defaultLayer = 0;
+    for (let idx = 0; idx < 8; idx++) {
+      if (d[3] & (1 << idx)) {
+        defaultLayer = idx;
+        break;
+      }
+    }
+
     return new EeConfig({
       magic: d[0] | (d[1] << 8),
       debug: d[2],
-      defaultLayer: d[3],
-      keymap: d[4] | (d[34] << 8),
+      defaultLayer: defaultLayer,
+      keymap: EeConfigKeymap.Deserialize(d[4] | (d[34] << 8)),
       mouseKeyAccel: d[5],
       backlight: d[6],
       audio: d[7],
@@ -124,12 +182,13 @@ export class EeConfig {
   }
 
   public static Serialize(config: EeConfig): number[] {
+    const keymap = EeConfigKeymap.Serialize(config.keymap);
     return [
       config.magic & 0xff,
       config.magic >> 8,
       config.debug,
-      config.defaultLayer,
-      config.keymap & 0xff,
+      (1 << config.defaultLayer) & 0xff,
+      keymap & 0xff,
       config.mouseKeyAccel,
       config.backlight,
       config.audio,
@@ -143,7 +202,7 @@ export class EeConfig {
       ...config.haptic,
       ...config.rgbmatrix,
       ...config.rgbmatrixExtend,
-      config.keymap >> 8,
+      keymap >> 8,
     ];
   }
 }

@@ -1,5 +1,10 @@
 import { useState, Fragment } from "react";
-import { EeConfig, EeConfigKeyboard, EeConfigUser } from "./EeConfig";
+import {
+  EeConfig,
+  EeConfigKeyboard,
+  EeConfigKeymap,
+  EeConfigUser,
+} from "./EeConfig";
 
 export interface IEeconfigProps {
   config: EeConfig;
@@ -90,6 +95,40 @@ function UserConfig(props: {
   );
 }
 
+function KeymapConfig(props: {
+  config: EeConfigKeymap;
+  onChange: (v: EeConfigKeymap) => void;
+}) {
+  const checkbox = (label: string, propName: keyof EeConfigKeymap) => {
+    return (
+      <label>
+        {label}
+        <input
+          type="checkbox"
+          checked={props.config[propName]}
+          onChange={(e) => {
+            props.onChange(
+              new EeConfigKeymap({
+                ...props.config,
+                [propName]: e.target.checked,
+              })
+            );
+          }}
+        ></input>
+      </label>
+    );
+  };
+
+  return (
+    <div>
+      {checkbox("Swap LALT LGUI", "swap_lalt_lgui")}
+      {checkbox("Swap RALT RGUI", "swap_ralt_rgui")}
+      {checkbox("Swap LCTL LGUI", "swap_lctl_lgui")}
+      {checkbox("Swap RCTL RGUI", "swap_rctl_rgui")}
+    </div>
+  );
+}
+
 export function EeConfigEditor(props: IEeconfigProps) {
   return (
     <Fragment>
@@ -98,7 +137,7 @@ export function EeConfigEditor(props: IEeconfigProps) {
         <input
           type="number"
           min={0}
-          max={32}
+          max={7}
           value={props.config.defaultLayer}
           onChange={(e) => {
             const newConfig = {
@@ -120,6 +159,13 @@ export function EeConfigEditor(props: IEeconfigProps) {
         config={props.config.user}
         onChange={(v) => {
           const newConfig = { ...props.config, user: v };
+          props.onChange(newConfig);
+        }}
+      />
+      <KeymapConfig
+        config={props.config.keymap}
+        onChange={(v) => {
+          const newConfig = { ...props.config, keymap: v };
           props.onChange(newConfig);
         }}
       />

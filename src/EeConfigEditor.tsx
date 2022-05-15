@@ -1,5 +1,5 @@
 import { useState, Fragment } from "react";
-import { EeConfig, EeConfigKeyboard } from "./EeConfig";
+import { EeConfig, EeConfigKeyboard, EeConfigUser } from "./EeConfig";
 
 export interface IEeconfigProps {
   config: EeConfig;
@@ -17,17 +17,17 @@ function KeyboardConfig(props: {
         <select
           name="override"
           onChange={(e) => {
-            const newConfig = {
+            const newConfig = new EeConfigKeyboard({
               ...props.config,
               override: Number(e.target.value),
-            };
+            });
             props.onChange(newConfig);
           }}
           value={props.config.override}
         >
           <option value={0}>Disable</option>
-          <option value={1}>JP</option>
-          <option value={2}>US</option>
+          <option value={1}>US keyboard on JP OS</option>
+          <option value={2}>JP keyboard on US OS</option>
         </select>
       </label>
       <label>
@@ -36,32 +36,57 @@ function KeyboardConfig(props: {
           type="checkbox"
           checked={props.config.enableCombo}
           onChange={(e) => {
-            const newConfig = {
+            const newConfig = new EeConfigKeyboard({
               ...props.config,
               enableCombo: e.target.checked,
-            };
+            });
             props.onChange(newConfig);
           }}
         ></input>
       </label>
-      <label>
-        Tapping term
-        <input
-          type="number"
-          min={0}
-          max={320}
-          step={20}
-          value={props.config.tappingTerm10ms * 10}
-          onChange={(e) => {
-            const newConfig = {
-              ...props.config,
-              tappingTerm10ms: Math.round(Number(e.target.value) / 10),
-            };
-            props.onChange(newConfig);
+      <div>
+        Tapping term: {props.config.tappingTerm20ms} ms
+        <button
+          onClick={() => {
+            props.onChange(props.config.IncrementTappingTerm());
           }}
-        ></input>
-      </label>
+        >
+          +
+        </button>
+        <button
+          onClick={() => {
+            props.onChange(props.config.DecrementTappingTerm());
+          }}
+        >
+          -
+        </button>
+      </div>
     </Fragment>
+  );
+}
+
+function UserConfig(props: {
+  config: EeConfigUser;
+  onChange: (v: EeConfigUser) => void;
+}) {
+  return (
+    <div>
+      Mouse gesture: {props.config.mouse_gesture} px
+      <button
+        onClick={() => {
+          props.onChange(props.config.IncrementMouseGesture());
+        }}
+      >
+        +
+      </button>
+      <button
+        onClick={() => {
+          props.onChange(props.config.DecrementMouseGesture());
+        }}
+      >
+        -
+      </button>
+    </div>
   );
 }
 
@@ -84,7 +109,6 @@ export function EeConfigEditor(props: IEeconfigProps) {
           }}
         ></input>
       </label>
-      <div>Keymap:{props.config.keymap.toString()}</div>
       <KeyboardConfig
         config={props.config.keyboard}
         onChange={(v) => {
@@ -92,7 +116,13 @@ export function EeConfigEditor(props: IEeconfigProps) {
           props.onChange(newConfig);
         }}
       />
-      <div>User:{props.config.user.toString()}</div>
+      <UserConfig
+        config={props.config.user}
+        onChange={(v) => {
+          const newConfig = { ...props.config, user: v };
+          props.onChange(newConfig);
+        }}
+      />
     </Fragment>
   );
 }

@@ -42,6 +42,7 @@ export class EeConfigKeyboard {
         ((((config.tappingTerm20ms - 60) / 10) & 0x0f) << 4),
       config.parserType & 0x01,
       0,
+      0,
     ];
   }
 }
@@ -78,42 +79,48 @@ export class EeConfigUser {
 }
 
 export class EeConfig {
-  readonly magic: number;
-  readonly debug: number;
-  readonly defaultLayer: number;
-  readonly keymap: number;
-  readonly mouseKeyAccel: number;
-  readonly backlight: number;
-  readonly audio: number;
-  readonly rgblight: number[];
-  readonly unicode: number;
-  readonly stenomode: number;
-  readonly handedness: number;
-  readonly keyboard: EeConfigKeyboard;
-  readonly user: EeConfigUser;
-  readonly velocikey: number;
-  readonly haptic: number[];
-  readonly rgbmatrix: number[];
-  readonly rgbmatrixExtend: number[];
+  readonly magic: number = 0;
+  readonly debug: number = 0;
+  readonly defaultLayer: number = 0;
+  readonly keymap: number = 0;
+  readonly mouseKeyAccel: number = 0;
+  readonly backlight: number = 0;
+  readonly audio: number = 0;
+  readonly rgblight: number[] = [0, 0, 0, 0];
+  readonly unicode: number = 0;
+  readonly stenomode: number = 0;
+  readonly handedness: number = 0;
+  readonly keyboard = EeConfigKeyboard.Deserialize([0, 0, 0, 0]);
+  readonly user = EeConfigUser.Deserialize([0, 0, 0, 0]);
+  readonly velocikey: number = 0;
+  readonly haptic: number[] = [0, 0, 0, 0];
+  readonly rgbmatrix: number[] = [0, 0, 0, 0];
+  readonly rgbmatrixExtend: number[] = [0, 0, 0, 0];
 
-  constructor(d: number[]) {
-    this.magic = d[0] | (d[1] << 8);
-    this.debug = d[2];
-    this.defaultLayer = d[3];
-    this.keymap = d[4] | (d[34] << 8);
-    this.mouseKeyAccel = d[5];
-    this.backlight = d[6];
-    this.audio = d[7];
-    this.rgblight = d.slice(8, 12);
-    this.unicode = d[12];
-    this.stenomode = d[13];
-    this.handedness = d[14];
-    this.keyboard = EeConfigKeyboard.Deserialize(d.slice(15, 19));
-    this.user = EeConfigUser.Deserialize(d.slice(19, 23));
-    this.velocikey = d[23];
-    this.haptic = d.slice(24, 28);
-    this.rgbmatrix = d.slice(28, 32);
-    this.rgbmatrixExtend = d.slice(32, 34);
+  constructor(init?: Partial<EeConfig>) {
+    Object.assign(this, init);
+  }
+
+  public static Deserialize(d: number[]): EeConfig {
+    return new EeConfig({
+      magic: d[0] | (d[1] << 8),
+      debug: d[2],
+      defaultLayer: d[3],
+      keymap: d[4] | (d[34] << 8),
+      mouseKeyAccel: d[5],
+      backlight: d[6],
+      audio: d[7],
+      rgblight: d.slice(8, 12),
+      unicode: d[12],
+      stenomode: d[13],
+      handedness: d[14],
+      keyboard: EeConfigKeyboard.Deserialize(d.slice(15, 19)),
+      user: EeConfigUser.Deserialize(d.slice(19, 23)),
+      velocikey: d[23],
+      haptic: d.slice(24, 28),
+      rgbmatrix: d.slice(28, 32),
+      rgbmatrixExtend: d.slice(32, 34),
+    });
   }
 
   public static Serialize(config: EeConfig): number[] {

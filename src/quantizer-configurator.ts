@@ -39,30 +39,39 @@ class EepromConfig {
     }
   }
 
-  public Deserialize() {
-    const active = new EeConfig(this.data);
-    const win = new EeConfig(this.data.slice(this.EECONFIG_SIZE));
-    const mac = new EeConfig(this.data.slice(this.EECONFIG_SIZE * 2));
-    const linux = new EeConfig(this.data.slice(this.EECONFIG_SIZE * 3));
+  public Deserialize(): IQuantizerConfig {
+    const active = EeConfig.Deserialize(this.data);
+    const win = EeConfig.Deserialize(this.data.slice(this.EECONFIG_SIZE));
+    const mac = EeConfig.Deserialize(this.data.slice(this.EECONFIG_SIZE * 2));
+    const linux = EeConfig.Deserialize(this.data.slice(this.EECONFIG_SIZE * 3));
     console.log(active, win, mac, linux);
-    return { active: active, win: win, mac: mac, linux: linux };
+    return {
+      protocolVer: this.protocolVersion,
+      currentOs: this.hostOs,
+      eeconfig: {
+        active: active,
+        win: win,
+        mac: mac,
+        linux: linux,
+      },
+    };
   }
 
   private serializeFragment(eeconfig: EeConfig) {
     console.log(eeconfig);
     const data = EeConfig.Serialize(eeconfig);
     if (data.length != this.EECONFIG_SIZE) {
-      console.log("failed to serialize", data.length);
+      throw new Error(`failed to serialize. Invalid length ${data.length}`);
     }
     return data;
   }
 
-  public Serialize(eeconfig: { [os: string]: EeConfig }) {
+  public Serialize(eeconfig: IQuantizerConfig) {
     return [
-      ...this.serializeFragment(eeconfig["active"]),
-      ...this.serializeFragment(eeconfig["win"]),
-      ...this.serializeFragment(eeconfig["mac"]),
-      ...this.serializeFragment(eeconfig["linux"]),
+      ...this.serializeFragment(eeconfig.eeconfig.active),
+      ...this.serializeFragment(eeconfig.eeconfig.win),
+      ...this.serializeFragment(eeconfig.eeconfig.mac),
+      ...this.serializeFragment(eeconfig.eeconfig.linux),
     ];
   }
 }
@@ -180,8 +189,19 @@ const hostOsCommand = () => {
   return Uint8Array.from([0x02, 0x99, 0x05]);
 };
 
+export interface IQuantizerConfig {
+  protocolVer: number;
+  currentOs: number;
+  eeconfig: {
+    active: EeConfig;
+    win: EeConfig;
+    mac: EeConfig;
+    linux: EeConfig;
+  };
+}
+
 export async function readEeConfig(
-  onReceive: (config: { [OS: string]: EeConfig }) => void
+  onReceive: (config: IQuantizerConfig) => void
 ) {
   if (hid.connected == false) {
     await hidOpen();
@@ -201,8 +221,8 @@ export async function readEeConfig(
 }
 
 export async function writeEeConfig(
-  config: { [OS: string]: EeConfig },
-  onReceive: (config: { [OS: string]: EeConfig }) => void
+  config: IQuantizerConfig,
+  onReceive: (config: IQuantizerConfig) => void
 ) {
   if (hid.connected == false) {
     await hidOpen();

@@ -47,7 +47,14 @@ class EepromConfig {
     console.log(active, win, mac, linux);
     return {
       protocolVer: this.protocolVersion,
-      currentOs: this.hostOs,
+      currentOs:
+        this.hostOs == 1
+          ? "win"
+          : this.hostOs == 2
+          ? "mac"
+          : this.hostOs == 3
+          ? "linux"
+          : "unknown",
       eeconfig: {
         active: active,
         win: win,
@@ -191,7 +198,7 @@ const hostOsCommand = () => {
 
 export interface IQuantizerConfig {
   protocolVer: number;
-  currentOs: number;
+  currentOs: "unknown" | "win" | "mac" | "linux";
   eeconfig: {
     active: EeConfig;
     win: EeConfig;

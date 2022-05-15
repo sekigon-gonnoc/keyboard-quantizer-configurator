@@ -9,30 +9,33 @@ import { EeConfig, EeConfigKeyboard } from "./EeConfig";
 import { EeConfigEditor } from "./EeConfigEditor";
 
 function App() {
-  const [eeconfig, setEeconfig] = useState<IQuantizerConfig | undefined>(
-    undefined
-  );
+  const [config, setConfig] = useState<IQuantizerConfig | undefined>(undefined);
 
   const editor = () => {
-    if (!eeconfig) {
+    if (!config) {
       return;
     }
 
-    if (eeconfig.eeconfig.active.keyboard.enableOs) {
+    if (config.eeconfig.active.keyboard.enableOs) {
       return (
         <Fragment>
           <EeConigEnableOs enabled={true} />
-          {Object.entries(eeconfig.eeconfig).map((e) => {
+          {Object.entries(config.eeconfig).map((e) => {
             const label = e[0];
+            if (label === config.currentOs) return;
+
             return (
               <Fragment key={label}>
-                <div>{label}</div>
+                <div>
+                  OS Type:{" "}
+                  {label === "active" ? `${config.currentOs}(active)` : label}
+                </div>
                 <EeConfigEditor
                   config={e[1]}
                   onChange={(newConfig) => {
-                    setEeconfig({
-                      ...eeconfig,
-                      eeconfig: { ...eeconfig.eeconfig, [label]: newConfig },
+                    setConfig({
+                      ...config,
+                      eeconfig: { ...config.eeconfig, [label]: newConfig },
                     });
                     console.log(newConfig);
                   }}
@@ -47,11 +50,11 @@ function App() {
         <Fragment>
           <EeConigEnableOs enabled={false} />
           <EeConfigEditor
-            config={eeconfig.eeconfig.active}
+            config={config.eeconfig.active}
             onChange={(newConfig) => {
-              setEeconfig({
-                ...eeconfig,
-                eeconfig: { ...eeconfig.eeconfig, active: newConfig },
+              setConfig({
+                ...config,
+                eeconfig: { ...config.eeconfig, active: newConfig },
               });
               console.log(newConfig);
             }}
@@ -62,7 +65,7 @@ function App() {
   };
 
   const EeConigEnableOs = (props: { enabled: boolean }) => {
-    if (!eeconfig) return <Fragment />;
+    if (!config) return <Fragment />;
 
     return (
       <div>
@@ -74,9 +77,9 @@ function App() {
             onChange={(e) => {
               const newConfig = Object.assign(
                 {},
-                ...Object.entries(eeconfig.eeconfig).map(([key, val]) => {
+                ...Object.entries(config.eeconfig).map(([key, val]) => {
                   const baseConfig =
-                    val.magic == 0xfee9 ? val : eeconfig.eeconfig.active;
+                    val.magic == 0xfee9 ? val : config.eeconfig.active;
                   return {
                     [key]: new EeConfig({
                       ...baseConfig,
@@ -90,12 +93,12 @@ function App() {
               );
               console.log(newConfig);
               console.log({
-                ...eeconfig,
-                eeconfig: { ...eeconfig.eeconfig, ...newConfig },
+                ...config,
+                eeconfig: { ...config.eeconfig, ...newConfig },
               });
-              setEeconfig({
-                ...eeconfig,
-                eeconfig: { ...eeconfig.eeconfig, ...newConfig },
+              setConfig({
+                ...config,
+                eeconfig: { ...config.eeconfig, ...newConfig },
               });
             }}
           ></input>
@@ -106,13 +109,13 @@ function App() {
 
   return (
     <div className="App">
-      <button onClick={() => readEeConfig((c) => setEeconfig(c))}>Read</button>
+      <button onClick={() => readEeConfig((c) => setConfig(c))}>Read</button>
       <button
         onClick={() => {
-          if (!eeconfig) {
+          if (!config) {
             return;
           }
-          writeEeConfig(eeconfig, (c) => setEeconfig(c));
+          writeEeConfig(config, (c) => setConfig(c));
         }}
       >
         Write

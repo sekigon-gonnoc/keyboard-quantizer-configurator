@@ -39,7 +39,7 @@ export class EeConfigKeyboard {
       (config.enableOs ? 0x01 : 0) |
         ((config.override & 0x03) << 1) |
         (config.enableCombo ? 0x08 : 0) |
-        ((((config.tappingTerm20ms - 60) / 10) & 0x0f) << 4),
+        ((((config.tappingTerm20ms - 40) / 20) & 0x0f) << 4),
       config.parserType & 0x01,
       0,
       0,

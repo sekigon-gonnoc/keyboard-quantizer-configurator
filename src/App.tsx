@@ -1,5 +1,5 @@
 import { Fragment, useState } from "react";
-import { readEeConfig, writeEeConfig } from "./quantizer-configurator";
+import { jumpBootloaderTarget, readEeConfig, writeEeConfig } from "./quantizer-configurator";
 import { EeConfig } from "./EeConfig";
 import { EeConfigEditor } from "./EeConfigEditor";
 
@@ -95,6 +95,13 @@ function App() {
         }}
       >
         Write
+      </button>
+      <button
+        onClick={() => {
+          jumpBootloaderTarget();
+        }}
+      >
+        Jump to bootloader
       </button>
       {editor()}
     </div>

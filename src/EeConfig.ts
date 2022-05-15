@@ -2,12 +2,17 @@ export class EeConfigKeyboard {
   readonly override: number = 0;
   readonly enableOs: boolean = false;
   readonly enableCombo: boolean = false;
+  readonly tappingTerm10ms: number = 0;
 
   constructor(data: number[]) {
     if (data.length >= 1) {
       this.enableOs = (data[0] & 0x01) > 0;
       this.override = (data[0] & 0x06) >> 1;
       this.enableCombo = (data[0] & 0x08) > 0;
+    }
+
+    if (data.length >= 2) {
+        this.tappingTerm10ms=data[1];
     }
   }
 
@@ -16,7 +21,7 @@ export class EeConfigKeyboard {
       (config.enableOs ? 0x01 : 0) |
         ((config.override & 0x03) << 1) |
         (config.enableCombo ? 0x08 : 0),
-      0,
+      config.tappingTerm10ms,
       0,
       0,
     ];

@@ -17,7 +17,10 @@ function KeyboardConfig(props: {
         <select
           name="override"
           onChange={(e) => {
-            const newConfig = { ...props.config, override: Number(e.target.value) };
+            const newConfig = {
+              ...props.config,
+              override: Number(e.target.value),
+            };
             props.onChange(newConfig);
           }}
           value={props.config.override}
@@ -33,7 +36,27 @@ function KeyboardConfig(props: {
           type="checkbox"
           checked={props.config.enableCombo}
           onChange={(e) => {
-            const newConfig = { ...props.config, enableCombo: e.target.checked };
+            const newConfig = {
+              ...props.config,
+              enableCombo: e.target.checked,
+            };
+            props.onChange(newConfig);
+          }}
+        ></input>
+      </label>
+      <label>
+        Tapping term
+        <input
+          type="number"
+          min={0}
+          max={320}
+          step={20}
+          value={props.config.tappingTerm10ms * 10}
+          onChange={(e) => {
+            const newConfig = {
+              ...props.config,
+              tappingTerm10ms: Math.round(Number(e.target.value) / 10),
+            };
             props.onChange(newConfig);
           }}
         ></input>

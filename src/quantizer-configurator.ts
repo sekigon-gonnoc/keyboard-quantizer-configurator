@@ -10,7 +10,7 @@ import { EeConfig } from "./EeConfig";
 //     id_eeprom,  // read/write eeprom
 // };
 
-let hid = new WebRawHID();
+const hid = new WebRawHID();
 
 class ProcessQueue {
   queue: Array<{ header: Uint8Array; process: (msg: Uint8Array) => void }> = [];
@@ -142,6 +142,30 @@ const eepromWriteCommand = (addr: number, size: number, data: number[]) => {
   ]);
 };
 
+const versionCommand = () => {
+  return Uint8Array.from([
+    0x02,
+    0x99,
+    0x01,
+  ]);
+}
+
+const bootloaderCommand = () => {
+  return Uint8Array.from([
+    0x03,
+    0x99,
+    0x02,
+  ]);
+}
+
+const resetCommand = () => {
+  return Uint8Array.from([
+    0x03,
+    0x99,
+    0x03,
+  ]);
+}
+
 
 export async function readEeConfig(
   onReceive: (config: { [OS: string]: EeConfig }) => void
@@ -181,7 +205,42 @@ export async function writeEeConfig(
     data.slice(130, 4 * eepromConfig.EECONFIG_SIZE),
     (msg) => {
       console.log("write complete");
-      readEeConfig(onReceive);
+      readEeConfig((c) => {
+        onReceive(c);
+        resetTarget();
+      });
     }
   );
 }
+
+export async function getVersion(
+  onReceive: (msg: Uint8Array) => void = () => {}
+) {
+  if (hid.connected == false) {
+    await hidOpen();
+  }
+
+  const cmd = versionCommand();
+  processQueue.Push(cmd, (msg) => {
+    onReceive(msg);
+  });
+  await hid.write(cmd);
+}
+
+export async function jumpBootloaderTarget(){
+  if (hid.connected == false) {
+    await hidOpen();
+  }
+
+  const cmd = bootloaderCommand();
+  await hid.write(cmd);
+};
+
+export async function resetTarget(){
+  if (hid.connected == false) {
+    await hidOpen();
+  }
+
+  const cmd = resetCommand();
+  await hid.write(cmd);
+};

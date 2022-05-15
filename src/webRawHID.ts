@@ -2,6 +2,7 @@ import { WebUsbComInterface } from "./webUsbComInterface";
 
 class WebRawHID implements WebUsbComInterface {
   private receiveCallback: ((msg: Uint8Array) => void) | null = null;
+  private openCallback: (() => void) | null = null;
   private closeCallback: (() => void) | null = null;
   private errorCallback: ((e: Error) => void) | null = null;
 
@@ -15,7 +16,11 @@ class WebRawHID implements WebUsbComInterface {
   constructor(
     private send_chunk: number = 64,
     private send_interval: number = 30
-  ) {}
+  ) {
+    navigator.hid.addEventListener("disconnect", (_device) => {
+      this._connected=false;
+    });
+  }
 
   setReceiveCallback(recvHandler: ((msg: Uint8Array) => void) | null) {
     this.receiveCallback = (e: any) => {
@@ -79,7 +84,7 @@ class WebRawHID implements WebUsbComInterface {
         this.port.removeEventListener("inputreport", this.receiveCallback);
         await this.port.close();
         this.port = null;
-        this._connected = false;
+        // this._connected = false;
       } catch (e) {
         console.error(e);
       }

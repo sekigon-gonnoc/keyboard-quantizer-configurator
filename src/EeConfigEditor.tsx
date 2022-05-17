@@ -1,4 +1,4 @@
-import { useState, Fragment } from "react";
+import { useState, Fragment, useRef, useEffect } from "react";
 import {
   EeConfig,
   EeConfigKeyboard,
@@ -18,12 +18,42 @@ function NumericUpDown(props: {
   onIncrement: () => void;
   onDecrement: () => void;
 }) {
+  const timer = useRef<{ up: number | undefined; down: number | undefined }>({
+    up: undefined,
+    down: undefined,
+  });
+  const propRef = useRef(props);
+  useEffect(() => {
+    propRef.current = props;
+  });
+
+  const clearUpTimer = () => {
+    clearInterval(timer.current.up);
+    timer.current.up = undefined;
+  };
+
+  const clearDownTimer = () => {
+    clearInterval(timer.current.down);
+    timer.current.down = undefined;
+  };
+
   return (
     <Fragment>
       <div className={`${props.className} updown`}>
         <button
           onMouseDown={() => {
             props.onIncrement();
+            if (!timer.current.up) {
+              timer.current.up = setInterval(() => {
+                propRef.current.onIncrement();
+              }, 150);
+            }
+          }}
+          onMouseUp={() => {
+            clearUpTimer();
+          }}
+          onMouseLeave={() => {
+            clearUpTimer();
           }}
         >
           +
@@ -32,6 +62,17 @@ function NumericUpDown(props: {
         <button
           onMouseDown={() => {
             props.onDecrement();
+            if (!timer.current.down) {
+              timer.current.down = setInterval(() => {
+                propRef.current.onDecrement();
+              }, 150);
+            }
+          }}
+          onMouseUp={() => {
+            clearDownTimer();
+          }}
+          onMouseLeave={() => {
+            clearDownTimer();
           }}
         >
           -

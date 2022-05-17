@@ -151,6 +151,21 @@ function KeyboardConfig(props: {
           props.onChange(props.config.DecrementTappingTerm());
         }}
       />
+      <label>
+        <div className="col-1">Use simple parser</div>
+        <input
+          type="checkbox"
+          checked={props.config.useSimpleParser}
+          onChange={(e) => {
+            props.onChange(
+              new EeConfigKeyboard({
+                ...props.config,
+                useSimpleParser: e.target.checked,
+              })
+            );
+          }}
+        ></input>
+      </label>
     </div>
   );
 }

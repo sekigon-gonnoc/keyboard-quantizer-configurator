@@ -103,9 +103,9 @@ class QuantizerCommand {
   ) => {
     const data = this.eepromConfig.Serialize(config);
 
-    await this.setEeprom(0, 130, data, (msg) => {
+    await this.setEeprom(0, QuantizerConfig.EECONFIG_SIZE * 4, data, (msg) => {
       console.log("write complete");
-      readEeConfig((c) => {
+      this.ReadEeConfig((c) => {
         onReceive(c);
         this.resetTarget();
       });

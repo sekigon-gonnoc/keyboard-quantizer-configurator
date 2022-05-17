@@ -3,7 +3,7 @@ export class EeConfigKeyboard {
   readonly enableOs: boolean = false;
   readonly enableCombo: boolean = false;
   readonly tappingTerm20ms: number = 0;
-  readonly parserType: number = 0;
+  readonly useSimpleParser: boolean = false;
 
   constructor(init?: Partial<EeConfigKeyboard>) {
     Object.assign(this, init);
@@ -30,7 +30,7 @@ export class EeConfigKeyboard {
       override: (data[0] & 0x06) >> 1,
       enableCombo: (data[0] & 0x08) > 0,
       tappingTerm20ms: tapterm == 0 ? 200 : tapterm * 20 + 40,
-      parserType: data[1] & 0x01,
+      useSimpleParser: (data[1] & 0x01) > 0,
     });
   }
 
@@ -40,7 +40,7 @@ export class EeConfigKeyboard {
         ((config.override & 0x03) << 1) |
         (config.enableCombo ? 0x08 : 0) |
         ((((config.tappingTerm20ms - 40) / 20) & 0x0f) << 4),
-      config.parserType & 0x01,
+      config.useSimpleParser ? 0x01 : 0,
       0,
       0,
     ];

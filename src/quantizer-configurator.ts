@@ -1,15 +1,6 @@
 import { WebRawHID } from "./webRawHID";
 import { EeConfig } from "./EeConfig";
 
-// enum via_keyboard_value_id_kb { id_keyboard_quantizer = 0x99 };
-
-// enum via_kq_value_id_kb {
-//     id_config_ver = 0x01,
-//     id_bootloader,
-//     id_reset,
-//     id_eeprom,  // read/write eeprom
-// };
-
 const hid = new WebRawHID();
 
 class ProcessQueue {
@@ -27,7 +18,7 @@ class ProcessQueue {
   }
 }
 
-class EepromConfig {
+class QuantizerConfig {
   readonly EECONFIG_SIZE = 35;
   data: Array<number> = [];
   protocolVersion = 0;
@@ -84,7 +75,7 @@ class EepromConfig {
 }
 
 const processQueue = new ProcessQueue();
-const eepromConfig = new EepromConfig();
+const eepromConfig = new QuantizerConfig();
 
 const recvHandler = (msg: Uint8Array) => {
   console.log(

@@ -7,6 +7,7 @@ import {
 } from "./quantizer-configurator";
 import { EeConfig, EeConfigKeyboard } from "./EeConfig";
 import { EeConfigEditor } from "./EeConfigEditor";
+import "./app.css";
 
 function App() {
   const [config, setConfig] = useState<IQuantizerConfig | undefined>(undefined);
@@ -26,10 +27,10 @@ function App() {
 
             return (
               <Fragment key={label}>
-                <div>
+                <h3>
                   OS Type:{" "}
                   {label === "active" ? `${config.currentOs}(active)` : label}
-                </div>
+                </h3>
                 <EeConfigEditor
                   config={e[1]}
                   onChange={(newConfig) => {
@@ -70,7 +71,6 @@ function App() {
     return (
       <div>
         <label>
-          OS Config
           <input
             type="checkbox"
             checked={props.enabled}
@@ -102,6 +102,7 @@ function App() {
               });
             }}
           ></input>
+          Enable per host OS config
         </label>
       </div>
     );
@@ -109,8 +110,14 @@ function App() {
 
   return (
     <div className="App">
-      <button onClick={() => readEeConfig((c) => setConfig(c))}>Read</button>
       <button
+        className="primary"
+        onClick={() => readEeConfig((c) => setConfig(c))}
+      >
+        Read
+      </button>
+      <button
+        className="primary"
         onClick={() => {
           if (!config) {
             return;
@@ -121,6 +128,7 @@ function App() {
         Write
       </button>
       <button
+        className="primary"
         onClick={() => {
           jumpBootloaderTarget();
         }}

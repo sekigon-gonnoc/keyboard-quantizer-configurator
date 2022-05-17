@@ -1,0 +1,60 @@
+
+h3 {
+    margin-top: 3px;
+    margin-bottom: 3px;
+}
+
+button, input, select {
+    font-family: inherit;
+    font-size: 100%;
+}
+
+.eeconfig-name {
+    display: grid;
+    grid-template-columns: 300px 200px;
+    grid-auto-rows: 25px;
+    gap: 5px;
+    align-items: center;
+}
+
+.col-1 {
+    grid-column: 1;
+    justify-self: center;
+}
+
+.col-2 {
+    grid-column: 2;
+}
+
+button.primary  {
+    min-width: 100px;
+    height: 35px;
+    margin: 5px;
+}
+
+.layer-config {
+    display: contents;
+}
+
+.keyboard-config {
+    display: contents;
+}
+
+.user-config {
+    display: contents;
+}
+
+.keymap-config {
+    display: contents;
+}
+
+.updown button {
+    width: 25px;
+    height: 25px;
+    padding: 0;
+}
+.updown div {
+    display: inline-block;
+    min-width: 50px;
+    text-align: center;
+}

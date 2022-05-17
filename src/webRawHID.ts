@@ -18,7 +18,7 @@ class WebRawHID implements WebUsbComInterface {
     private send_interval: number = 30
   ) {
     (navigator as any).hid.addEventListener("disconnect", (_device: any) => {
-      this._connected=false;
+      this._connected = false;
     });
   }
 
@@ -43,10 +43,14 @@ class WebRawHID implements WebUsbComInterface {
     console.log(request);
     this.port = request[0];
 
+    if (!this.port) {
+      return;
+    }
+
     try {
       await this.port.open();
     } catch (e) {
-      await this.port.close();
+      await this.port?.close();
       return Promise.reject(e);
     }
 

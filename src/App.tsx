@@ -11,6 +11,7 @@ import "./app.css";
 
 function App() {
   const [config, setConfig] = useState<IQuantizerConfig | undefined>(undefined);
+  const [btnDisable, setBtnDisable] = useState(false);
 
   const editor = () => {
     if (!config) {
@@ -110,31 +111,52 @@ function App() {
 
   return (
     <div className="App">
-      <button
-        className="primary"
-        onClick={() => readEeConfig((c) => setConfig(c))}
-      >
-        Read
-      </button>
-      <button
-        className="primary"
-        onClick={() => {
-          if (!config) {
-            return;
-          }
-          writeEeConfig(config, (c) => setConfig(c));
-        }}
-      >
-        Write
-      </button>
-      <button
-        className="primary"
-        onClick={() => {
-          jumpBootloaderTarget();
-        }}
-      >
-        Jump to bootloader
-      </button>
+      <div>
+        <button
+          className="primary"
+          disabled={btnDisable}
+          onClick={() => {
+            setBtnDisable(true);
+            readEeConfig(
+              (c) => setConfig(c),
+              () => {
+                setBtnDisable(false);
+              }
+            );
+          }}
+        >
+          Read
+        </button>
+        <button
+          disabled={btnDisable}
+          className="primary"
+          onClick={() => {
+            if (!config) {
+              return;
+            }
+            setBtnDisable(true);
+            writeEeConfig(
+              config,
+              (c) => setConfig(c),
+
+              () => {
+                setBtnDisable(false);
+              }
+            );
+          }}
+        >
+          Write
+        </button>
+        <button
+          disabled={btnDisable}
+          className="primary"
+          onClick={() => {
+            jumpBootloaderTarget();
+          }}
+        >
+          Jump to bootloader
+        </button>
+      </div>
       {editor()}
     </div>
   );

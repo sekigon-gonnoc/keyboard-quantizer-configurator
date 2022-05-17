@@ -85,7 +85,8 @@ class QuantizerCommand {
   private readonly eepromConfig = new QuantizerConfig();
 
   public readonly ReadEeConfig = async (
-    onReceive: (msg: IQuantizerConfig) => void
+    onReceive: (msg: IQuantizerConfig) => void,
+    onComplete: () => void
   ) => {
     await this.getEeprom(
       0,
@@ -93,22 +94,30 @@ class QuantizerCommand {
       (_: Uint8Array) => {
         const config = this.eepromConfig.Deserialize();
         onReceive(config);
+        onComplete();
       }
     );
   };
 
   public readonly WriteEeConfig = async (
     config: IQuantizerConfig,
-    onReceive: (config: IQuantizerConfig) => void
+    onReceive: (config: IQuantizerConfig) => void,
+    onComplete: () => void
   ) => {
     const data = this.eepromConfig.Serialize(config);
 
     await this.setEeprom(0, QuantizerConfig.EECONFIG_SIZE * 4, data, (msg) => {
       console.log("write complete");
-      this.ReadEeConfig((c) => {
-        onReceive(c);
-        this.resetTarget();
-      });
+      this.ReadEeConfig(
+        (c) => {
+          onReceive(c);
+        },
+        () => {
+          this.resetTarget().then(() => {
+            onComplete();
+          });
+        }
+      );
     });
   };
 
@@ -141,18 +150,8 @@ class QuantizerCommand {
     await this.write(cmd);
   };
 
-  private readonly resetTarget = async () => {
-    const cmd = this.resetCommand();
-    await this.write(cmd);
-  };
-
-  private readonly write = async (cmd: Uint8Array) => {
-    await this.open();
-    await this.hid.write(cmd);
-  };
-
-  private readonly open = async () => {
-    if (this.hid.connected) return;
+  public readonly Open = async () => {
+    if (this.hid.connected) return true;
 
     if (!(navigator as any).hid) {
       alert("Please use chrome or edge");
@@ -162,7 +161,23 @@ class QuantizerCommand {
       filter: [{ usagePage: 0xff60, usage: 0x61 }],
     });
 
+    if (!this.hid.connected) {
+      return false;
+    }
+
     this.hid.setReceiveCallback(this.recvHandler);
+
+    return true;
+  };
+
+  private readonly resetTarget = async () => {
+    const cmd = this.resetCommand();
+    await this.write(cmd);
+  };
+
+  private readonly write = async (cmd: Uint8Array) => {
+    await this.Open();
+    await this.hid.write(cmd);
   };
 
   private readonly recvHandler = (msg: Uint8Array) => {
@@ -301,18 +316,30 @@ export interface IQuantizerConfig {
 }
 
 export async function readEeConfig(
-  onReceive: (config: IQuantizerConfig) => void
+  onReceive: (config: IQuantizerConfig) => void,
+  onComplete: () => void
 ) {
+  const opened = await quantizer.Open();
+  if (!opened) {
+    onComplete();
+    return;
+  }
   await quantizer.GetVersion();
   await quantizer.GetHostOs();
-  await quantizer.ReadEeConfig(onReceive);
+  await quantizer.ReadEeConfig(onReceive, onComplete);
 }
 
 export async function writeEeConfig(
   config: IQuantizerConfig,
-  onReceive: (config: IQuantizerConfig) => void
+  onReceive: (config: IQuantizerConfig) => void,
+  onComplete: () => void
 ) {
-  await quantizer.WriteEeConfig(config, onReceive);
+  const opened = await quantizer.Open();
+  if (!opened) {
+    onComplete();
+    return;
+  }
+  await quantizer.WriteEeConfig(config, onReceive, onComplete);
 }
 
 export async function jumpBootloaderTarget() {

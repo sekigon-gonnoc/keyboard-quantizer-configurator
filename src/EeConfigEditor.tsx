@@ -106,42 +106,40 @@ function KeyboardConfig(props: {
 }) {
   return (
     <div className="keyboard-config">
-      <label htmlFor="override" className="col-1">
-        Key Override
+      <label>
+        <div className="col-1">Key Override</div>
+        <select
+          className="col-2"
+          name="override"
+          onChange={(e) => {
+            const newConfig = new EeConfigKeyboard({
+              ...props.config,
+              override: Number(e.target.value),
+            });
+            props.onChange(newConfig);
+          }}
+          value={props.config.override}
+        >
+          <option value={0}>Disable</option>
+          <option value={1}>US keyboard on JP OS</option>
+          <option value={2}>JP keyboard on US OS</option>
+        </select>
       </label>
-      <select
-        id="override"
-        className="col-2"
-        name="override"
-        onChange={(e) => {
-          const newConfig = new EeConfigKeyboard({
-            ...props.config,
-            override: Number(e.target.value),
-          });
-          props.onChange(newConfig);
-        }}
-        value={props.config.override}
-      >
-        <option value={0}>Disable</option>
-        <option value={1}>US keyboard on JP OS</option>
-        <option value={2}>JP keyboard on US OS</option>
-      </select>
-      <label htmlFor="combo" className="col-1">
-        Use last layer as Combo setting
+      <label>
+        <div className="col-1">Use last layer as Combo setting</div>
+        <input
+          className="col-2"
+          type="checkbox"
+          checked={props.config.enableCombo}
+          onChange={(e) => {
+            const newConfig = new EeConfigKeyboard({
+              ...props.config,
+              enableCombo: e.target.checked,
+            });
+            props.onChange(newConfig);
+          }}
+        ></input>
       </label>
-      <input
-        id="combo"
-        className="col-2"
-        type="checkbox"
-        checked={props.config.enableCombo}
-        onChange={(e) => {
-          const newConfig = new EeConfigKeyboard({
-            ...props.config,
-            enableCombo: e.target.checked,
-          });
-          props.onChange(newConfig);
-        }}
-      ></input>
       <div className="col-1">Tapping Term [ms]</div>
       <NumericUpDown
         className="col-2"
@@ -185,23 +183,22 @@ function KeymapConfig(props: {
   const checkbox = (label: string, propName: keyof EeConfigKeymap) => {
     return (
       <div className="keymap-config">
-        <label htmlFor={propName} className="col-1">
-          {label}
+        <label>
+          <div className="col-1">{label}</div>
+          <input
+            className="col-2"
+            type="checkbox"
+            checked={props.config[propName]}
+            onChange={(e) => {
+              props.onChange(
+                new EeConfigKeymap({
+                  ...props.config,
+                  [propName]: e.target.checked,
+                })
+              );
+            }}
+          ></input>
         </label>
-        <input
-          id={propName}
-          className="col-2"
-          type="checkbox"
-          checked={props.config[propName]}
-          onChange={(e) => {
-            props.onChange(
-              new EeConfigKeymap({
-                ...props.config,
-                [propName]: e.target.checked,
-              })
-            );
-          }}
-        ></input>
       </div>
     );
   };
@@ -218,7 +215,7 @@ function KeymapConfig(props: {
 
 export function EeConfigEditor(props: IEeconfigProps) {
   return (
-    <div className="eeconfig-name">
+    <div className="eeconfig-editor">
       <LayerConfig
         layer={props.config.defaultLayer}
         onChange={(v) => {

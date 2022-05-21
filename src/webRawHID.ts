@@ -17,7 +17,7 @@ class WebRawHID implements WebUsbComInterface {
     private send_chunk: number = 64,
     private send_interval: number = 30
   ) {
-    (navigator as any).hid.addEventListener("disconnect", (_device: any) => {
+    (navigator as any).hid?.addEventListener("disconnect", (_device: any) => {
       this._connected = false;
     });
   }

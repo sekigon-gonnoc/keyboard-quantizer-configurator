@@ -29,16 +29,19 @@ class QuantizerConfig {
 
   public Deserialize(): IQuantizerConfig {
     const active = EeConfig.Deserialize(this.data);
-    const win = EeConfig.Deserialize(
+    const unknown = EeConfig.Deserialize(
       this.data.slice(QuantizerConfig.EECONFIG_SIZE)
     );
-    const mac = EeConfig.Deserialize(
+    const win = EeConfig.Deserialize(
       this.data.slice(QuantizerConfig.EECONFIG_SIZE * 2)
     );
-    const linux = EeConfig.Deserialize(
+    const mac = EeConfig.Deserialize(
       this.data.slice(QuantizerConfig.EECONFIG_SIZE * 3)
     );
-    console.log(active, win, mac, linux);
+    const linux = EeConfig.Deserialize(
+      this.data.slice(QuantizerConfig.EECONFIG_SIZE * 4)
+    );
+    console.log(active, unknown, win, mac, linux);
     return {
       protocolVer: this.protocolVersion,
       currentOs:
@@ -54,6 +57,7 @@ class QuantizerConfig {
         win: win,
         mac: mac,
         linux: linux,
+        unknown: unknown,
       },
     };
   }
@@ -70,6 +74,7 @@ class QuantizerConfig {
   public Serialize(eeconfig: IQuantizerConfig) {
     return [
       ...this.serializeFragment(eeconfig.eeconfig.active),
+      ...this.serializeFragment(eeconfig.eeconfig.unknown),
       ...this.serializeFragment(eeconfig.eeconfig.win),
       ...this.serializeFragment(eeconfig.eeconfig.mac),
       ...this.serializeFragment(eeconfig.eeconfig.linux),
@@ -90,7 +95,7 @@ class QuantizerCommand {
   ) => {
     await this.getEeprom(
       0,
-      QuantizerConfig.EECONFIG_SIZE * 4,
+      QuantizerConfig.EECONFIG_SIZE * 5,
       (_: Uint8Array) => {
         const config = this.eepromConfig.Deserialize();
         onReceive(config);
@@ -106,7 +111,7 @@ class QuantizerCommand {
   ) => {
     const data = this.eepromConfig.Serialize(config);
 
-    await this.setEeprom(0, QuantizerConfig.EECONFIG_SIZE * 4, data, (msg) => {
+    await this.setEeprom(0, QuantizerConfig.EECONFIG_SIZE * 5, data, (msg) => {
       console.log("write complete");
       this.ReadEeConfig(
         (c) => {
@@ -312,6 +317,7 @@ export interface IQuantizerConfig {
     win: EeConfig;
     mac: EeConfig;
     linux: EeConfig;
+    unknown: EeConfig;
   };
 }
 

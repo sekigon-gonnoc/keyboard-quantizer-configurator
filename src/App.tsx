@@ -119,8 +119,11 @@ function App() {
             setBtnDisable(true);
             readEeConfig(
               (c) => setConfig(c),
-              () => {
+              (success, msg) => {
                 setBtnDisable(false);
+                if (!success) {
+                  alert(msg);
+                }
               }
             );
           }}
@@ -139,8 +142,11 @@ function App() {
               config,
               (c) => setConfig(c),
 
-              () => {
+              (success, msg) => {
                 setBtnDisable(false);
+                if (!success) {
+                  alert(msg);
+                }
               }
             );
           }}

@@ -8,8 +8,11 @@ class ProcessQueue {
 
   public Process(msg: Uint8Array) {
     const p = this.queue.at(0);
-    if (p?.header.toString() === msg.slice(0, p?.header.length).toString()) {
-      p.process(msg);
+    if (
+      msg[0] == 0xff ||
+      p?.header.toString() === msg.slice(0, p?.header.length).toString()
+    ) {
+      p?.process(msg);
       this.queue.shift();
     }
   }
@@ -91,7 +94,7 @@ class QuantizerCommand {
 
   public readonly ReadEeConfig = async (
     onReceive: (msg: IQuantizerConfig) => void,
-    onComplete: () => void
+    onComplete: (succecc: boolean, msg: string) => void
   ) => {
     await this.getEeprom(
       0,
@@ -99,7 +102,7 @@ class QuantizerCommand {
       (_: Uint8Array) => {
         const config = this.eepromConfig.Deserialize();
         onReceive(config);
-        onComplete();
+        onComplete(true, "Read completed");
       }
     );
   };
@@ -107,7 +110,7 @@ class QuantizerCommand {
   public readonly WriteEeConfig = async (
     config: IQuantizerConfig,
     onReceive: (config: IQuantizerConfig) => void,
-    onComplete: () => void
+    onComplete: (succecc: boolean, msg: string) => void
   ) => {
     const data = this.eepromConfig.Serialize(config);
 
@@ -119,7 +122,7 @@ class QuantizerCommand {
         },
         () => {
           this.resetTarget().then(() => {
-            onComplete();
+            onComplete(true, "Write completed");
           });
         }
       );
@@ -127,13 +130,13 @@ class QuantizerCommand {
   };
 
   public readonly GetVersion = async (
-    onReceive: (msg: Uint8Array) => void = () => {}
+    onReceive: (version: number) => void = () => {}
   ) => {
     const cmd = this.versionCommand();
     this.processQueue.Push(cmd, (msg) => {
       this.eepromConfig.protocolVersion = msg[3];
       console.log(`protocol ver.:${this.eepromConfig.protocolVersion}`);
-      onReceive(msg);
+      onReceive(this.eepromConfig.protocolVersion);
     });
     await this.write(cmd);
   };
@@ -323,26 +326,32 @@ export interface IQuantizerConfig {
 
 export async function readEeConfig(
   onReceive: (config: IQuantizerConfig) => void,
-  onComplete: () => void
+  onComplete: (succecc: boolean, msg: string) => void
 ) {
   const opened = await quantizer.Open();
   if (!opened) {
-    onComplete();
+    onComplete(false, "Port open failed");
     return;
   }
-  await quantizer.GetVersion();
-  await quantizer.GetHostOs();
-  await quantizer.ReadEeConfig(onReceive, onComplete);
+  await quantizer.GetVersion((version) => {
+    if (version == 1) {
+      quantizer.GetHostOs().then(() => {
+        quantizer.ReadEeConfig(onReceive, onComplete);
+      });
+    } else {
+      onComplete(false, "This firmware version is not supported");
+    }
+  });
 }
 
 export async function writeEeConfig(
   config: IQuantizerConfig,
   onReceive: (config: IQuantizerConfig) => void,
-  onComplete: () => void
+  onComplete: (succecc: boolean, msg: string) => void
 ) {
   const opened = await quantizer.Open();
   if (!opened) {
-    onComplete();
+    onComplete(false, "Port open failed");
     return;
   }
   await quantizer.WriteEeConfig(config, onReceive, onComplete);
